@@ -3,7 +3,7 @@ Views for Recipe.
 """
 from recipe import serializers
 from rest_framework import viewsets
-from core.models import Recipe, Tag
+from core.models import Recipe, Tag, Ingredient
 
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
@@ -47,4 +47,19 @@ class TagViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         """Create a new tag."""
+        serializer.save(user=self.request.user)
+
+
+class IngredientViewSet(viewsets.ModelViewSet):
+    serializer_class = serializers.IngredientSerializer
+    queryset = Ingredient.objects.all()
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        """Retrieves ingredients for authenticated API requests."""
+        return self.queryset.filter(user=self.request.user).order_by('name')
+
+    def perform_create(self, serializer):
+        """Create a new ingredient."""
         serializer.save(user=self.request.user)

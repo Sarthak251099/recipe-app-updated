@@ -33,12 +33,26 @@ class UserManager(BaseUserManager):
         return user
 
 
+class Home(models.Model):
+    """Home object."""
+    name = models.CharField(max_length=255, default='Home')
+    parameters = models.CharField(max_length=10)
+
+    def __str__(self):
+        return self.name
+
+
 class User(AbstractBaseUser, PermissionsMixin):
     """User in the system."""
     email = models.EmailField(max_length=255, unique=True)
     name = models.CharField(max_length=255)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
+    home = models.ForeignKey(
+        Home,
+        null=True,
+        on_delete=models.SET_NULL,
+    )
 
     objects = UserManager()
 
@@ -55,8 +69,6 @@ class Recipe(models.Model):
     description = models.TextField(blank=True)
     time_minutes = models.IntegerField()
     link = models.CharField(max_length=255, blank=True)
-    tags = models.ManyToManyField('Tag')
-    ingredients = models.ManyToManyField('Ingredient')
 
     def __str__(self):
         return self.title

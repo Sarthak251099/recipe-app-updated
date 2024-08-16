@@ -82,3 +82,35 @@ class ModelTests(TestCase):
         ingredient = models.Ingredient.objects.create(user=user, name='Salt')
 
         self.assertEqual(str(ingredient), ingredient.name)
+
+    def test_creating_new_home_success(self):
+        """Test to create a new home in databse."""
+        home = models.Home.objects.create(name='Oakies', parameters='27456')
+        self.assertEqual(home.name, str(home))
+
+    def test_create_user_with_home_assigned(self):
+        """Test for creating user with home assigned."""
+        home = models.Home.objects.create(name='Oakies', parameters='27456')
+        user = get_user_model().objects.create_user(
+            name='Sarthak',
+            email='test@example.com',
+            password='testpass123',
+            home=home,
+        )
+        self.assertEqual(user.home, home)
+
+    def test_delete_home_for_existing_user_sucess(self):
+        """Deleting home for user assigns null value to home."""
+        home = models.Home.objects.create(
+            name='Padma Nilaya',
+            parameters='27456'
+        )
+        user = get_user_model().objects.create_user(
+            name='Sarthak',
+            email='test@example.com',
+            password='testpass123',
+            home=home,
+        )
+        home.delete()
+        user.refresh_from_db()
+        self.assertEqual(user.home, None)

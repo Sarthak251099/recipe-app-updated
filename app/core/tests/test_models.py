@@ -114,3 +114,25 @@ class ModelTests(TestCase):
         home.delete()
         user.refresh_from_db()
         self.assertEqual(user.home, None)
+
+    def test_add_inventory_item(self):
+        """Test adding a new inventory ingredient for a home."""
+        user = get_user_model().objects.create_user(
+            name='Sarthak',
+            email='test@example.com',
+            password='testpass123',
+        )
+        home = models.Home.objects.create(
+            name='Padma Nilaya',
+            parameters='27456'
+        )
+        ingredient = models.Ingredient.objects.create(
+            user=user,
+            name='Salt',
+        )
+        inventory = models.Inventory.objects.create(
+            home=home,
+            ingredient=ingredient,
+            amount=500,
+        )
+        self.assertEqual(inventory.home, home)

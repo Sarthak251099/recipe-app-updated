@@ -52,6 +52,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         Home,
         null=True,
         on_delete=models.SET_NULL,
+        related_name='users'
     )
 
     objects = UserManager()
@@ -96,3 +97,23 @@ class Ingredient(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class Inventory(models.Model):
+    """Inventory for home."""
+    ingredient = models.ForeignKey(
+        Ingredient,
+        on_delete=models.CASCADE,
+    )
+    home = models.ForeignKey(
+        Home,
+        on_delete=models.CASCADE,
+    )
+    amount = models.IntegerField()
+
+    def __str__(self):
+        return (
+            f'Ingredient: {self.ingredient},'
+            f'Home: {self.home},'
+            f'Amount: {self.amount}'
+        )

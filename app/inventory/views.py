@@ -31,3 +31,16 @@ class InventoryViewSet(viewsets.ModelViewSet):
             serializer.save()
         else:
             raise ValidationError('Request not authorized for the user.')
+
+    def perform_update(self, serializer):
+        user = self.request.user
+        if not user.home:
+            raise ValidationError('User does not have a home.')
+        if "home" in serializer.validated_data:
+            home = serializer.validated_data['home']
+            if user.home == home:
+                serializer.save()
+            else:
+                raise ValidationError('Request not authorized for the user.')
+        else:
+            serializer.save()

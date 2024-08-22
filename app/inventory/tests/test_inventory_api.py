@@ -16,6 +16,11 @@ from inventory.serializers import InventorySerializer
 INVENTORY_URL = reverse('inventory:inventory-list')
 
 
+def detail_url(inventory_id):
+    """Detail url for inventory item."""
+    return reverse('inventory:inventory-detail', args=[inventory_id])
+
+
 def add_to_inventory(home, ingredient, amount=500):
     """Add ingredient item to inventory of home."""
     return Inventory.objects.create(
@@ -117,3 +122,36 @@ class PrivateInventoryApiTests(TestCase):
         inventory = Inventory.objects.get(home=self.home)
         serializer = InventorySerializer(inventory)
         self.assertEqual(serializer.data, res.data)
+
+    def test_update_inventory_object(self):
+        """Tests updating an inventory object for a home."""
+        self.user.home = self.home
+        self.user.save()
+        ingredient = create_ingredient(user=self.user, name='Neembu')
+        inventory = add_to_inventory(ingredient=ingredient, home=self.home)
+        payload = {
+            'amount': 200,
+        }
+        url = detail_url(inventory.id)
+        res = self.client.patch(url, payload)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        inventory.refresh_from_db()
+        serializer = InventorySerializer(inventory)
+        self.assertEqual(serializer.data, res.data)
+
+    def test_update_inventory_for_other_home(self):
+        """Test updating inventory for other home is unsuccessful."""
+        other_user = create_user(email='test2@example.com')
+        other_user.home = self.home
+        other_user.save()
+        ingredient = create_ingredient(user=self.user, name='Neembu')
+        inventory = add_to_inventory(ingredient=ingredient, home=self.home)
+        payload = {
+            'amount': 200,
+        }
+        url = detail_url(inventory.id)
+        res = self.client.patch(url, payload)
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        inventory.refresh_from_db()
+        serializer = InventorySerializer(inventory)
+        self.assertNotEqual(serializer.data, res.data)

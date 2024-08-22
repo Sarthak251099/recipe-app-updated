@@ -15,10 +15,6 @@ class HomeSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'parameters']
         read_only_fields = ['id']
 
-    def create(self, validated_data):
-        """Create a home object in the system."""
-        return Home.objects.create(**validated_data)
-
     def update(self, instance, validated_data):
         """Update existing home in system."""
         user = self.context['request'].user

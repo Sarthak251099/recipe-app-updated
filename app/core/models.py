@@ -113,7 +113,7 @@ class Inventory(models.Model):
 
     def __str__(self):
         return (
-            f'Ingredient: {self.ingredient},'
-            f'Home: {self.home},'
+            f'Ingredient: {self.ingredient}, '
+            f'Home: {self.home}, '
             f'Amount: {self.amount}'
         )

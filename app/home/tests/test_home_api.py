@@ -133,8 +133,10 @@ class PrivateHomeApiTests(TestCase):
         self.assertEqual(home.name, payload['name'])
         self.assertEqual(self.user.home, home)
 
-    def test_updating_other_user_home(self):
-        """Test updating home for different user fails."""
+    def test_updating_other_user_home_when_no_home(self):
+        """Test updating home for different user when logged in
+        user has no home assigned is unsuccessful."""
+
         home = create_home()
         new_user = create_user(
             email='test1@example.com',
@@ -148,7 +150,8 @@ class PrivateHomeApiTests(TestCase):
             'parameters': '12832',
         }
         url = detail_url(home.id)
-        self.client.put(url, payload)
+        res = self.client.put(url, payload)
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
         home.refresh_from_db()
         self.assertNotEqual(home.name, payload['name'])
 
@@ -177,3 +180,29 @@ class PrivateHomeApiTests(TestCase):
         res = self.client.delete(url)
         self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
         self.assertTrue(Home.objects.filter(id=home.id).exists())
+
+    def test_update_other_user_home(self):
+        """Test updating other user's home is unsuccessful when
+        logged in user has a different home."""
+
+        # logged in user has a home
+        home = create_home(name='Banarasi Ghar')
+        self.user.home = home
+        self.user.save()
+
+        # new user has another home
+        new_user = create_user(
+            email='user2@example.com',
+        )
+        new_home = create_home(name='Bihari Ghar')
+        new_user.home = new_home
+        new_user.save()
+
+        payload = {
+            'name': 'Updated Ghar',
+        }
+
+        # Logged in user trying to update new home of new user
+        url = detail_url(new_home.id)
+        self.client.patch(url, payload)
+        self.assertEqual(new_user.home.name, 'Bihari Ghar')

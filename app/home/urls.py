@@ -8,6 +8,7 @@ from rest_framework.routers import DefaultRouter
 
 router = DefaultRouter()
 router.register('homes', views.HomeViewSet)
+router.register('inventorys', views.InventoryViewSet)
 
 app_name = 'home'
 

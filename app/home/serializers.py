@@ -3,7 +3,7 @@ Serializers for home object.
 """
 
 from rest_framework import serializers
-from core.models import Home
+from core.models import Home, Inventory
 from rest_framework.exceptions import ValidationError
 
 
@@ -23,3 +23,12 @@ class HomeSerializer(serializers.ModelSerializer):
         else:
             return ValidationError('You do not have permissions.')
         return home
+
+
+class InventorySerializer(serializers.ModelSerializer):
+    """Serializer object for Inventory."""
+
+    class Meta:
+        model = Inventory
+        fields = ['id', 'home', 'ingredient', 'amount']
+        read_only_fields = ['id']

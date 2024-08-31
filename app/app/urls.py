@@ -31,5 +31,4 @@ urlpatterns = [
     path('api/user/', include('user.urls')),
     path('api/recipe/', include('recipe.urls')),
     path('api/home/', include('home.urls')),
-    path('api/inventory/', include('inventory.urls')),
 ]

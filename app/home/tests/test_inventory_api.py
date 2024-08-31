@@ -11,14 +11,14 @@ from core.models import (
     Ingredient,
 )
 from django.contrib.auth import get_user_model
-from inventory.serializers import InventorySerializer
+from home.serializers import InventorySerializer
 
-INVENTORY_URL = reverse('inventory:inventory-list')
+INVENTORY_URL = reverse('home:inventory-list')
 
 
 def detail_url(inventory_id):
     """Detail url for inventory item."""
-    return reverse('inventory:inventory-detail', args=[inventory_id])
+    return reverse('home:inventory-detail', args=[inventory_id])
 
 
 def add_to_inventory(home, ingredient, amount=500):

@@ -7,6 +7,7 @@ from core.models import Recipe, Tag, Ingredient
 
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import PermissionDenied
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -42,12 +43,26 @@ class TagViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        """Retrieves tags for authneticates API requests."""
-        return self.queryset.filter(user=self.request.user).order_by('name')
+        """Retrieves tags for authenticated API requests."""
+        return self.queryset.all().order_by('name')
 
     def perform_create(self, serializer):
         """Create a new tag."""
         serializer.save(user=self.request.user)
+
+    def update(self, request, *args, **kwargs):
+        """Update a tag if the user is the creator."""
+        tag = self.get_object()
+        if tag.user != request.user:
+            raise PermissionDenied('You do not have permission to update.')
+        return super().update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        """Delete a tag if the user is the creator."""
+        tag = self.get_object()
+        if tag.user != request.user:
+            raise PermissionDenied('You do not have permission to delete.')
+        return super().destroy(request, *args, **kwargs)
 
 
 class IngredientViewSet(viewsets.ModelViewSet):
@@ -58,8 +73,22 @@ class IngredientViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Retrieves ingredients for authenticated API requests."""
-        return self.queryset.filter(user=self.request.user).order_by('name')
+        return self.queryset.all().order_by('name')
 
     def perform_create(self, serializer):
         """Create a new ingredient."""
         serializer.save(user=self.request.user)
+
+    def update(self, request, *args, **kwargs):
+        """Update an ingredient if the user is the creator."""
+        ingredient = self.get_object()
+        if ingredient.user != request.user:
+            raise PermissionDenied('You do not have permission to update.')
+        return super().update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        """Delete an ingredient if the user is the creator."""
+        ingredient = self.get_object()
+        if ingredient.user != request.user:
+            raise PermissionDenied('You do not have permission to delete.')
+        return super().destroy(request, *args, **kwargs)

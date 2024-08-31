@@ -75,19 +75,6 @@ class PrivateTagApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data, serializer.data)
 
-    def test_tag_limited_to_user(self):
-        """Test list of tags is limited to authenticated user."""
-        user2 = create_user(email='user2@example.com')
-        Tag.objects.create(user=user2, name='Fruity')
-        tag = create_tag(user=self.user, name='Comfort Food')
-
-        res = self.client.get(TAGS_URL)
-
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(res.data), 1)
-        self.assertEqual(res.data[0]['name'], tag.name)
-        self.assertEqual(res.data[0]['id'], tag.id)
-
     def test_get_detail_tag(self):
         """Test for getting detail tag info."""
         tag = create_tag(user=self.user)
@@ -131,3 +118,28 @@ class PrivateTagApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
         tags = Tag.objects.filter(user=self.user)
         self.assertFalse(tags.exists())
+
+    def test_update_tag_not_created_by_user(self):
+        """Test updating aa tag, not created by user results error."""
+        new_user = create_user(email='aman@example.com')
+        tag = create_tag(user=new_user, name='Healthy')
+        payload = {
+            'name': 'Super Healthy',
+        }
+        url = detail_url(tag.id)
+
+        res = self.client.patch(url, payload)
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+        tag.refresh_from_db()
+        self.assertNotEqual(tag.name, payload['name'])
+
+    def test_delete_ingredient_not_created_by_user(self):
+        """Test delete a tag, not created by user results error."""
+        new_user = create_user(email='bhagwan@example.com')
+        tag = create_tag(user=new_user, name='Healthy')
+        url = detail_url(tag.id)
+
+        res = self.client.delete(url)
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+        tags = Tag.objects.filter(id=tag.id)
+        self.assertTrue(tags.exists())

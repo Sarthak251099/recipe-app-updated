@@ -64,24 +64,11 @@ class PrivateIngredientApiTests(TestCase):
         create_ingredient(name='Salt', user=self.user)
         create_ingredient(name='Pasta', user=self.user)
         res = self.client.get(INGREDIENT_URL)
-        ing = Ingredient.objects.filter(user=self.user).order_by('name')
+        ing = Ingredient.objects.all().order_by('name')
         serializer = IngredientSerializer(ing, many=True)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data, serializer.data)
-
-    def test_ingredient_limited_to_user(self):
-        """Test list of ingredients is limited to authenticated user."""
-        user2 = create_user(email='user2@example.com')
-        Ingredient.objects.create(user=user2, name='Banana')
-        ingredient = create_ingredient(user=self.user, name='Sugar')
-
-        res = self.client.get(INGREDIENT_URL)
-
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(res.data), 1)
-        self.assertEqual(res.data[0]['name'], ingredient.name)
-        self.assertEqual(res.data[0]['id'], ingredient.id)
 
     def test_get_detail_ingredient(self):
         """Test fetching detail ingredient info."""
@@ -124,3 +111,28 @@ class PrivateIngredientApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
         ings = Ingredient.objects.filter(user=self.user)
         self.assertFalse(ings.exists())
+
+    def test_update_ingredient_not_created_by_user(self):
+        """Test updating an ingredient, not created by user fails."""
+        new_user = create_user(email='aman@example.com')
+        ing = create_ingredient(user=new_user, name='Garam Masala')
+        payload = {
+            'name': 'Super Garam Masala',
+        }
+        url = detail_url(ing.id)
+
+        res = self.client.patch(url, payload)
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+        ing.refresh_from_db()
+        self.assertNotEqual(ing.name, payload['name'])
+
+    def test_delete_ingredient_not_created_by_user(self):
+        """Test delete ingredient, not created by user fails."""
+        new_user = create_user(email='bhagwan@example.com')
+        ing = create_ingredient(user=new_user, name='Garam Masala')
+        url = detail_url(ing.id)
+
+        res = self.client.delete(url)
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+        ings = Ingredient.objects.filter(id=ing.id)
+        self.assertTrue(ings.exists())

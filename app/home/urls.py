@@ -13,5 +13,7 @@ app_name = 'home'
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('inventory-fetch/', views.InventoryFetchViewSet.as_view(), name='inventory-fetch')
+    path('inventory-fetch/',
+         views.InventoryFetchViewSet.as_view(),
+         name='inventory-fetch'),
 ]

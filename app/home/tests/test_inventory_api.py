@@ -6,11 +6,8 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 from core.models import (
-    Home,
     Inventory,
-    Ingredient,
 )
-from django.contrib.auth import get_user_model
 from home.serializers import InventorySerializer
 from home.helper_method import (
     create_user,
@@ -49,10 +46,9 @@ class PrivateInventoryAPiTests(TestCase):
 
     def test_fetching_inventory_list_for_user_home(self):
         """Test fetch inventory for user's home."""
-        
+
         ingredient = create_ingredient(user=self.user, name='Pepper')
         add_to_inventory(home=self.home, ingredient=ingredient)
-
         res = self.client.get(FETCH_INVENTORY_URL)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)

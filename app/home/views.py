@@ -78,6 +78,11 @@ class InventoryFetchViewSet(generics.ListAPIView):
     def get_queryset(self):
         user = self.request.user
         if user.home:
-            return self.queryset.filter(home=user.home).order_by('-id').select_related('ingredient')
+            return (
+                self.queryset
+                .filter(home=user.home)
+                .order_by('-id')
+                .select_related('ingredient')
+                )
         else:
             raise ValidationError('User does not have a home.')

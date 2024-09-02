@@ -68,8 +68,8 @@ class HomeViewSet(viewsets.ModelViewSet):
         return super().destroy(request, *args, **kwargs)
 
 
-class InventoryFetchViewSet(generics.ListAPIView):
-    """View to manage inventory API requests."""
+class InventoryFetchView(generics.ListAPIView):
+    """View to fetch inventory list API requests."""
     serializer_class = serializers.InventorySerializer
     queryset = Inventory.objects.all()
     authentication_classes = [TokenAuthentication]
@@ -86,3 +86,26 @@ class InventoryFetchViewSet(generics.ListAPIView):
                 )
         else:
             raise ValidationError('User does not have a home.')
+
+
+class InventoryCreateView(generics.CreateAPIView):
+    """View to create inventory item API request."""
+    serializer_class = serializers.InventorySerializer
+    queryset = Inventory.objects.all()
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        """Create and return a Inventory object."""
+        user = self.request.user
+        home = user.home
+
+        if not user.home:
+            raise ValidationError('User does not have a home.')
+
+        home = serializer.validated_data.get('home')
+        if home.id != user.home.id:
+            raise PermissionDenied(
+                'You are not authorized to add to this inventory.')
+
+        serializer.save()

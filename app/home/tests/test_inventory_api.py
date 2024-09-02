@@ -16,7 +16,7 @@ from home.helper_method import (
     add_to_inventory,
 )
 
-# CREATE_INVENTORY_URL = reverse('home:inventory-create')
+CREATE_INVENTORY_URL = reverse('home:inventory-create')
 FETCH_INVENTORY_URL = reverse('home:inventory-fetch')
 
 
@@ -46,7 +46,6 @@ class PrivateInventoryAPiTests(TestCase):
 
     def test_fetching_inventory_list_for_user_home(self):
         """Test fetch inventory for user's home."""
-
         ingredient = create_ingredient(user=self.user, name='Pepper')
         add_to_inventory(home=self.home, ingredient=ingredient)
         res = self.client.get(FETCH_INVENTORY_URL)
@@ -59,8 +58,36 @@ class PrivateInventoryAPiTests(TestCase):
 
     def test_fetch_inventory_for_user_without_home(self):
         """Tests fetching inventory list when user has no home."""
-
         self.home.delete()
         self.user.refresh_from_db()
         res = self.client.get(FETCH_INVENTORY_URL)
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_inventory_for_home(self):
+        """Test creating inventory for user's home."""
+        ingredient = create_ingredient(user=self.user, name='Dhaniya')
+        payload = {
+            'home': self.home.id,
+            'ingredient': ingredient.id,
+            'amount': 300,
+        }
+        res = self.client.post(CREATE_INVENTORY_URL, payload)
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        inventory = Inventory.objects.get(home=self.home)
+        serializer = InventorySerializer(inventory)
+        self.assertEqual(serializer.data, res.data)
+
+    def test_create_inventory_for_different_home_is_fail(self):
+        """Test create inventory for a home which is not the
+        logged in user's home is unsuccessful."""
+
+        new_home = create_home(name='New Home')
+        ingredient = create_ingredient(user=self.user, name='Dhaniya')
+        payload = {
+            'home': new_home.id,
+            'ingredient': ingredient.id,
+            'amount': 300,
+        }
+
+        res = self.client.post(CREATE_INVENTORY_URL, payload)
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)

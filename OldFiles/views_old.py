@@ -2,7 +2,7 @@
 Views for Home API.
 """
 
-from rest_framework import viewsets, status, generics
+from rest_framework import viewsets, status
 
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
@@ -68,7 +68,7 @@ class HomeViewSet(viewsets.ModelViewSet):
         return super().destroy(request, *args, **kwargs)
 
 
-class InventoryFetchViewSet(generics.ListAPIView):
+class InventoryViewSet(viewsets.ModelViewSet):
     """View to manage inventory API requests."""
     serializer_class = serializers.InventorySerializer
     queryset = Inventory.objects.all()
@@ -78,6 +78,27 @@ class InventoryFetchViewSet(generics.ListAPIView):
     def get_queryset(self):
         user = self.request.user
         if user.home:
-            return self.queryset.filter(home=user.home).order_by('-id').select_related('ingredient')
+            return self.queryset.filter(home=user.home).order_by('-id')
         else:
+            raise ValidationError('User has no home.')
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        home = serializer.validated_data['home']
+        if user.home and user.home == home:
+            serializer.save()
+        else:
+            raise ValidationError('Request not authorized for the user.')
+
+    def perform_update(self, serializer):
+        user = self.request.user
+        if not user.home:
             raise ValidationError('User does not have a home.')
+        if "home" in serializer.validated_data:
+            home = serializer.validated_data['home']
+            if user.home == home:
+                serializer.save()
+            else:
+                raise ValidationError('Request not authorized for the user.')
+        else:
+            serializer.save()

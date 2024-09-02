@@ -18,7 +18,9 @@ class HomeSerializer(serializers.ModelSerializer):
 class InventorySerializer(serializers.ModelSerializer):
     """Serializer object for Inventory."""
 
+    ingredient_name = serializers.ReadOnlyField(source='ingredient.name')
+
     class Meta:
         model = Inventory
-        fields = ['id', 'home', 'ingredient', 'amount']
-        read_only_fields = ['id']
+        fields = ['id', 'home', 'ingredient', 'ingredient_name', 'amount']
+        read_only_fields = ['id', 'ingredient_name']

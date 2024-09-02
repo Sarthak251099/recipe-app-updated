@@ -8,10 +8,10 @@ from rest_framework.routers import DefaultRouter
 
 router = DefaultRouter()
 router.register('homes', views.HomeViewSet)
-router.register('inventorys', views.InventoryViewSet)
 
 app_name = 'home'
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('inventory-fetch/', views.InventoryFetchViewSet.as_view(), name='inventory-fetch')
 ]

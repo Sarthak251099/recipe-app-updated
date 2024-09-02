@@ -18,5 +18,8 @@ urlpatterns = [
          name='inventory-fetch'),
     path('inventory-create/',
          views.InventoryCreateView.as_view(),
-         name='inventory-create')
+         name='inventory-create'),
+    path('inventory-update/<int:pk>/',
+         views.InventoryUpdateView.as_view(),
+         name='inventory-update'),
 ]

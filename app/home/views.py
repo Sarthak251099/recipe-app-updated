@@ -8,7 +8,7 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from home import serializers
-from core.models import Home, Inventory
+from core.models import Home, Inventory, Ingredient
 from rest_framework.exceptions import ValidationError
 from rest_framework.exceptions import PermissionDenied
 
@@ -98,14 +98,59 @@ class InventoryCreateView(generics.CreateAPIView):
     def perform_create(self, serializer):
         """Create and return a Inventory object."""
         user = self.request.user
-        home = user.home
 
         if not user.home:
             raise ValidationError('User does not have a home.')
 
-        home = serializer.validated_data.get('home')
-        if home.id != user.home.id:
+        request_home = serializer.validated_data.get('home')
+        if request_home.id != user.home.id:
             raise PermissionDenied(
                 'You are not authorized to add to this inventory.')
+
+        ingredient = serializer.validated_data.get('ingredient')
+        exist = Ingredient.objects.filter(id=ingredient.id).exists()
+
+        if not exist:
+            raise ValidationError('Given ingredient does not exists.')
+
+        serializer.save()
+
+
+class InventoryUpdateView(generics.RetrieveUpdateAPIView):
+    """View to update and retrieve Inventory items for home."""
+    serializer_class = serializers.InventorySerializer
+    queryset = Inventory.objects.all()
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        """Return detailed Inventory item for home."""
+        user = self.request.user
+
+        if not user.home:
+            raise ValidationError('User does not have a home.')
+
+        return (
+            self.queryset
+            .filter(home=user.home)
+            .select_related('ingredient')
+            )
+
+    def perform_update(self, serializer):
+        """Update inventory item for user's home."""
+        user = self.request.user
+
+        if not user.home:
+            raise ValidationError('User does not have a home.')
+
+        if serializer.instance.home != user.home:
+            raise PermissionDenied(
+                'You do not have permissions to update for this home.')
+
+        home_in_payload = serializer.validated_data.get('home')
+
+        if home_in_payload and home_in_payload != user.home:
+            raise PermissionDenied(
+                'You do not have permissions to update for this home.')
 
         serializer.save()

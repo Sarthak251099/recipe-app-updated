@@ -20,6 +20,11 @@ CREATE_INVENTORY_URL = reverse('home:inventory-create')
 FETCH_INVENTORY_URL = reverse('home:inventory-fetch')
 
 
+def detail_url(inventory_id):
+    """Return URL for updating inventory object."""
+    return reverse('home:inventory-update', args=[inventory_id])
+
+
 class PublicInventoryApiTests(TestCase):
     """Test unauthenticated Inventory API requests."""
 
@@ -79,7 +84,7 @@ class PrivateInventoryAPiTests(TestCase):
 
     def test_create_inventory_for_different_home_is_fail(self):
         """Test create inventory for a home which is not the
-        logged in user's home is unsuccessful."""
+        logged in user's home results unsuccessful."""
 
         new_home = create_home(name='New Home')
         ingredient = create_ingredient(user=self.user, name='Dhaniya')
@@ -90,4 +95,39 @@ class PrivateInventoryAPiTests(TestCase):
         }
 
         res = self.client.post(CREATE_INVENTORY_URL, payload)
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_create_inventory_for_ingredient_not_available(self):
+        """Test create inventory for ingredient which is unavailable."""
+        payload = {
+            'home': self.home.id,
+            'ingredient': 100000,
+            'amount': 300,
+        }
+        res = self.client.post(CREATE_INVENTORY_URL, payload)
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_update_inventory_for_user_home(self):
+        """Test update inventory for user's home."""
+        ingredient = create_ingredient(user=self.user, name='Ketchup')
+        inventory = add_to_inventory(home=self.home, ingredient=ingredient)
+        url = detail_url(inventory.id)
+        payload = {
+            'amount': 100,
+        }
+        res = self.client.patch(url, payload)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        inventory.refresh_from_db()
+        self.assertEqual(inventory.amount, payload['amount'])
+
+    def test_updating_home_in_inventory_for_user_unsuccessful(self):
+        """Test update home in inventory for a user is unsuccessful."""
+        new_home = create_home(name='New Home')
+        ingredient = create_ingredient(user=self.user, name='Ketchup')
+        inventory = add_to_inventory(home=self.home, ingredient=ingredient)
+        url = detail_url(inventory.id)
+        payload = {
+            'home': new_home.id,
+        }
+        res = self.client.patch(url, payload)
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)

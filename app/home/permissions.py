@@ -35,6 +35,6 @@ class IsHomeOwner(permissions.BasePermission):
             if obj.home != user.home:
                 raise PermissionDenied(
                     'You do not have permissions to \
-                    modify this inventory item.')
+modify this inventory item.')
 
         return True

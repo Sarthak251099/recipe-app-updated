@@ -76,6 +76,10 @@ class InventoryFetchView(generics.ListAPIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated, IsHomeOwner]
 
+    def get_queryset(self):
+        """Return the list of inventory for authenticated user."""
+        return self.queryset.filter(home=self.request.user.home).order_by('-id')
+
 
 class InventoryCreateView(generics.CreateAPIView):
     """View to create inventory item API request."""

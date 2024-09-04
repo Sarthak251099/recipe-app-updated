@@ -68,6 +68,21 @@ class PrivateInventoryAPiTests(TestCase):
         res = self.client.get(FETCH_INVENTORY_URL)
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_retrieve_inventory_limited_to_user_home(self):
+        """Test retrieve inventory list limited to user's home"""
+        ing1 = create_ingredient(user=self.user, name='Pudina')
+        ing2 = create_ingredient(user=self.user, name='Garlic')
+        new_home = create_home(name="New Home")
+        add_to_inventory(home=self.home, ingredient=ing1)
+        add_to_inventory(home=new_home, ingredient=ing2)
+
+        res = self.client.get(FETCH_INVENTORY_URL)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        
+        inv = Inventory.objects.filter(home=self.home).order_by('-id')
+        serializer = InventorySerializer(inv, many=True)
+        self.assertEqual(res.data, serializer.data)
+
     def test_create_inventory_for_home(self):
         """Test creating inventory for user's home."""
         ingredient = create_ingredient(user=self.user, name='Dhaniya')
@@ -164,13 +179,15 @@ class PrivateInventoryAPiTests(TestCase):
         self.assertNotEqual(inventory.ingredient.id, payload['ingredient'])
 
     def test_delete_inventory_item(self):
-        """Test deleting inventory itemis success."""
+        """Test deleting inventory item is success."""
 
         ingredient = create_ingredient(user=self.user, name='Jeeravan')
         inventory = add_to_inventory(home=self.home, ingredient=ingredient)
         url = detail_url(inventory.id)
         res = self.client.delete(url)
         self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+        inv = Inventory.objects.filter(id=inventory.id)
+        self.assertFalse(inv.exists())
 
     def test_delete_inventory_for_different_home(self):
         """Test delete inventory item for home which is

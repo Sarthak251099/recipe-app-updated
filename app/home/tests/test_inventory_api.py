@@ -78,7 +78,7 @@ class PrivateInventoryAPiTests(TestCase):
 
         res = self.client.get(FETCH_INVENTORY_URL)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        
+
         inv = Inventory.objects.filter(home=self.home).order_by('-id')
         serializer = InventorySerializer(inv, many=True)
         self.assertEqual(res.data, serializer.data)

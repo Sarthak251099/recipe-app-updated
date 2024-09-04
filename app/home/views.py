@@ -78,7 +78,9 @@ class InventoryFetchView(generics.ListAPIView):
 
     def get_queryset(self):
         """Return the list of inventory for authenticated user."""
-        return self.queryset.filter(home=self.request.user.home).order_by('-id')
+        return (self.queryset
+                .filter(home=self.request.user.home)
+                .order_by('-id'))
 
 
 class InventoryCreateView(generics.CreateAPIView):

@@ -7,7 +7,7 @@ from core.models import Recipe, Tag, Ingredient
 
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.exceptions import PermissionDenied
+from recipe.permissions import TagPermissions, IngredientPermissions
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -40,7 +40,7 @@ class TagViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.TagSerializer
     queryset = Tag.objects.all()
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, TagPermissions]
 
     def get_queryset(self):
         """Retrieves tags for authenticated API requests."""
@@ -50,26 +50,12 @@ class TagViewSet(viewsets.ModelViewSet):
         """Create a new tag."""
         serializer.save(user=self.request.user)
 
-    def update(self, request, *args, **kwargs):
-        """Update a tag if the user is the creator."""
-        tag = self.get_object()
-        if tag.user != request.user:
-            raise PermissionDenied('You do not have permission to update.')
-        return super().update(request, *args, **kwargs)
-
-    def destroy(self, request, *args, **kwargs):
-        """Delete a tag if the user is the creator."""
-        tag = self.get_object()
-        if tag.user != request.user:
-            raise PermissionDenied('You do not have permission to delete.')
-        return super().destroy(request, *args, **kwargs)
-
 
 class IngredientViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.IngredientSerializer
     queryset = Ingredient.objects.all()
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IngredientPermissions]
 
     def get_queryset(self):
         """Retrieves ingredients for authenticated API requests."""
@@ -78,17 +64,3 @@ class IngredientViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         """Create a new ingredient."""
         serializer.save(user=self.request.user)
-
-    def update(self, request, *args, **kwargs):
-        """Update an ingredient if the user is the creator."""
-        ingredient = self.get_object()
-        if ingredient.user != request.user:
-            raise PermissionDenied('You do not have permission to update.')
-        return super().update(request, *args, **kwargs)
-
-    def destroy(self, request, *args, **kwargs):
-        """Delete an ingredient if the user is the creator."""
-        ingredient = self.get_object()
-        if ingredient.user != request.user:
-            raise PermissionDenied('You do not have permission to delete.')
-        return super().destroy(request, *args, **kwargs)

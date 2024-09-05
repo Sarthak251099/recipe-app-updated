@@ -32,7 +32,7 @@ class PublicTagApiTests(TestCase):
     def test_auth_required(self):
         """Test auth is required for retrieving tags."""
         user = create_user(email='sarthak@example.com')
-        create_tag(user=user)
+        create_tag(user=user, name="Guilty pleasure")
         res = self.client.get(TAGS_URL)
 
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -47,7 +47,7 @@ class PrivateTagApiTests(TestCase):
         self.client.force_authenticate(self.user)
 
     def test_retrieve_tags(self):
-        """Test retrieve tags returns success."""
+        """Test retrieve tags is success."""
 
         create_tag(name='Chinese', user=self.user)
         create_tag(name='Vegetarian', user=self.user)
@@ -81,7 +81,7 @@ class PrivateTagApiTests(TestCase):
         self.assertEqual(tag.name, payload['name'])
 
     def test_create_new_tag(self):
-        """Tests creating a new tag."""
+        """Test creating a new tag."""
         payload = {
             'name': 'Vietanamese',
         }
@@ -103,7 +103,7 @@ class PrivateTagApiTests(TestCase):
         self.assertFalse(tags.exists())
 
     def test_update_tag_not_created_by_user(self):
-        """Test updating aa tag, not created by user results error."""
+        """Test updating a tag, not created by user results error."""
         new_user = create_user(email='aman@example.com')
         tag = create_tag(user=new_user, name='Healthy')
         payload = {
@@ -116,7 +116,7 @@ class PrivateTagApiTests(TestCase):
         tag.refresh_from_db()
         self.assertNotEqual(tag.name, payload['name'])
 
-    def test_delete_ingredient_not_created_by_user(self):
+    def test_delete_tag_not_created_by_user(self):
         """Test delete a tag, not created by user results error."""
         new_user = create_user(email='bhagwan@example.com')
         tag = create_tag(user=new_user, name='Healthy')
@@ -126,3 +126,14 @@ class PrivateTagApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
         tags = Tag.objects.filter(id=tag.id)
         self.assertTrue(tags.exists())
+
+    def test_creating_tag_which_already_exists(self):
+        """Test create tag which is already in system is unsuccessful."""
+        tag = create_tag(user=self.user, name='Wonder Food')
+        payload = {
+            'name': 'Wonder Food',
+        }
+        res = self.client.post(TAGS_URL, payload)
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        tag_count = Tag.objects.filter(name=tag.name).count()
+        self.assertEqual(tag_count, 1)

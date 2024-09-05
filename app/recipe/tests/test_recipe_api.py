@@ -9,30 +9,14 @@ from recipe.serializers import (
     RecipeSerializer,
     RecipeDetailSerializer,
 )
-from django.contrib.auth import get_user_model
+from recipe.helper_method import (
+    create_recipe,
+    create_user,
+)
 
 from core.models import Recipe
 
 RECIPES_URL = reverse('recipe:recipe-list')
-
-
-def create_user(**params):
-    """Create and return a new user."""
-    return get_user_model().objects.create_user(**params)
-
-
-def create_recipe(user, **params):
-    """Create and return a new recipe."""
-    defaults = {
-        'title': 'Sample recipe title',
-        'time_minutes': 22,
-        'description': 'Sample Description',
-        'link': 'http://example.com/recipe.pdf'
-    }
-    defaults.update(params)
-
-    recipe = Recipe.objects.create(user=user, **defaults)
-    return recipe
 
 
 def detail_url(recipe_id):

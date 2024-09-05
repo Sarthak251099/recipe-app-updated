@@ -3,39 +3,21 @@ Tests for ingredients API requests.
 """
 from django.test import TestCase
 from django.urls import reverse
-from django.contrib.auth import get_user_model
 
 from core.models import Ingredient
 
 from rest_framework import status
 from rest_framework.test import APIClient
 from recipe.serializers import IngredientSerializer
-
+from recipe.helper_method import (
+    create_user,
+    create_ingredient,
+)
 INGREDIENT_URL = reverse('recipe:ingredient-list')
 
 
 def detail_url(ingredient_id):
     return reverse('recipe:ingredient-detail', args=[ingredient_id])
-
-
-def create_user(**params):
-    defaults = {
-        'email': 'test123@example.com',
-        'password': 'testpass123'
-    }
-    defaults.update(params)
-    user = get_user_model().objects.create_user(**defaults)
-    return user
-
-
-def create_ingredient(user, **params):
-    defaults = {
-        'name': 'Wheat'
-    }
-    defaults.update(params)
-    ingredient = Ingredient.objects.create(user=user, **defaults)
-
-    return ingredient
 
 
 class PublicIngredientApiTests(TestCase):
@@ -55,7 +37,7 @@ class PrivateIngredientApiTests(TestCase):
 
     def setUp(self):
         self.client = APIClient()
-        self.user = create_user()
+        self.user = create_user(email='sarthak@example.com')
         self.client.force_authenticate(self.user)
 
     def test_get_ingredients_successful(self):

@@ -9,30 +9,13 @@ from rest_framework.test import APIClient
 from rest_framework import status
 
 from core.models import Tag
-from django.contrib.auth import get_user_model
 from recipe.serializers import TagSerializer
+from recipe.helper_method import (
+    create_user,
+    create_tag
+)
 
 TAGS_URL = reverse('recipe:tag-list')
-
-
-def create_user(**params):
-    defaults = {
-        'email': 'test123@example.com',
-        'password': 'testpass123'
-    }
-    defaults.update(params)
-    user = get_user_model().objects.create_user(**defaults)
-    return user
-
-
-def create_tag(user, **params):
-    defaults = {
-        'name': 'Tag 1'
-    }
-    defaults.update(params)
-    tag = Tag.objects.create(user=user, **defaults)
-
-    return tag
 
 
 def detail_url(tag_id):
@@ -48,7 +31,7 @@ class PublicTagApiTests(TestCase):
 
     def test_auth_required(self):
         """Test auth is required for retrieving tags."""
-        user = create_user()
+        user = create_user(email='sarthak@example.com')
         create_tag(user=user)
         res = self.client.get(TAGS_URL)
 
@@ -60,7 +43,7 @@ class PrivateTagApiTests(TestCase):
 
     def setUp(self):
         self.client = APIClient()
-        self.user = create_user()
+        self.user = create_user(email='akshat@example.com')
         self.client.force_authenticate(self.user)
 
     def test_retrieve_tags(self):
@@ -69,7 +52,7 @@ class PrivateTagApiTests(TestCase):
         create_tag(name='Chinese', user=self.user)
         create_tag(name='Vegetarian', user=self.user)
         res = self.client.get(TAGS_URL)
-        tags = Tag.objects.filter(user=self.user)
+        tags = Tag.objects.all().order_by('name')
         serializer = TagSerializer(tags, many=True)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
@@ -77,7 +60,7 @@ class PrivateTagApiTests(TestCase):
 
     def test_get_detail_tag(self):
         """Test for getting detail tag info."""
-        tag = create_tag(user=self.user)
+        tag = create_tag(user=self.user, name='Chinese')
         url = detail_url(tag.id)
 
         res = self.client.get(url)
@@ -90,7 +73,7 @@ class PrivateTagApiTests(TestCase):
         url = detail_url(tag.id)
 
         payload = {
-            'name': 'Thai Food'
+            'name': 'Thai Food',
         }
         res = self.client.patch(url, payload)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
@@ -100,7 +83,7 @@ class PrivateTagApiTests(TestCase):
     def test_create_new_tag(self):
         """Tests creating a new tag."""
         payload = {
-            'name': 'Vietanamese'
+            'name': 'Vietanamese',
         }
         res = self.client.post(TAGS_URL, payload)
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)

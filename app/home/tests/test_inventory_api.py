@@ -52,7 +52,10 @@ class PrivateInventoryAPiTests(TestCase):
     def test_fetching_inventory_list_for_user_home(self):
         """Test fetch inventory for user's home."""
         ingredient = create_ingredient(user=self.user, name='Pepper')
+        ingredient2 = create_ingredient(user=self.user, name='Brocoli')
         add_to_inventory(home=self.home, ingredient=ingredient)
+        add_to_inventory(home=self.home, ingredient=ingredient2)
+
         res = self.client.get(FETCH_INVENTORY_URL)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
@@ -66,7 +69,7 @@ class PrivateInventoryAPiTests(TestCase):
         self.home.delete()
         self.user.refresh_from_db()
         res = self.client.get(FETCH_INVENTORY_URL)
-        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_retrieve_inventory_limited_to_user_home(self):
         """Test retrieve inventory list limited to user's home"""
@@ -87,7 +90,6 @@ class PrivateInventoryAPiTests(TestCase):
         """Test creating inventory for user's home."""
         ingredient = create_ingredient(user=self.user, name='Dhaniya')
         payload = {
-            'home': self.home.id,
             'ingredient': ingredient.id,
             'amount': 300,
         }
@@ -97,25 +99,20 @@ class PrivateInventoryAPiTests(TestCase):
         serializer = InventorySerializer(inventory)
         self.assertEqual(serializer.data, res.data)
 
-    def test_create_inventory_for_different_home_is_fail(self):
-        """Test create inventory for a home which is not the
-        logged in user's home results unsuccessful."""
-
-        new_home = create_home(name='New Home')
+    def test_create_when_ingredient_already_in_inventory(self):
+        """Test create inventory when ingredient already in inventory."""
         ingredient = create_ingredient(user=self.user, name='Dhaniya')
+        add_to_inventory(home=self.home, ingredient=ingredient)
         payload = {
-            'home': new_home.id,
             'ingredient': ingredient.id,
             'amount': 300,
         }
-
         res = self.client.post(CREATE_INVENTORY_URL, payload)
-        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_create_inventory_for_ingredient_not_available(self):
         """Test create inventory for ingredient which is unavailable."""
         payload = {
-            'home': self.home.id,
             'ingredient': 100000,
             'amount': 300,
         }
@@ -144,8 +141,9 @@ class PrivateInventoryAPiTests(TestCase):
         payload = {
             'home': new_home.id,
         }
-        res = self.client.patch(url, payload)
-        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+        self.client.patch(url, payload)
+        inventory.refresh_from_db()
+        self.assertNotEqual(inventory.home.id, payload['home'])
 
     def test_updating_inventory_for_different_home_fails(self):
         """Test update inventory for a home which is not the

@@ -90,6 +90,10 @@ class InventoryCreateView(generics.CreateAPIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated, IsHomeOwner]
 
+    def perform_create(self, serializer):
+        """Create inventory for authenticated user's home"""
+        serializer.save(home=self.request.user.home)
+
 
 class InventoryDetailView(generics.RetrieveUpdateDestroyAPIView):
     """View to update and retrieve Inventory items for home."""

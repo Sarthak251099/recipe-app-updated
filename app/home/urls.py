@@ -22,4 +22,6 @@ urlpatterns = [
     path('inventory-detail/<int:pk>/',
          views.InventoryDetailView.as_view(),
          name='inventory-detail'),
+    path('adduser/', views.AddUserToHomeView.as_view(),
+         name='adduser'),
 ]

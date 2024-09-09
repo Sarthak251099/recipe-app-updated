@@ -11,7 +11,8 @@ from home import serializers
 from core.models import Home, Inventory
 from rest_framework.exceptions import ValidationError
 from rest_framework.exceptions import PermissionDenied
-from home.permissions import IsHomeOwner
+from home.permissions import IsHomeOwner, AddUserToHomePermissions
+from django.contrib.auth import get_user_model
 
 
 class HomeViewSet(viewsets.ModelViewSet):
@@ -101,3 +102,17 @@ class InventoryDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Inventory.objects.all()
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated, IsHomeOwner]
+
+
+class AddUserToHomeView(generics.CreateAPIView):
+    """View to add a user to logged in user's home."""
+    serializer_class = serializers.AddUserHomeSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated, AddUserToHomePermissions]
+
+    def perform_create(self, serializer):
+        user_id_in_payload = serializer.validated_data['user']
+        user_to_add = get_user_model().objects.get(id=user_id_in_payload)
+        auth_user = self.request.user
+        user_to_add.home = auth_user.home
+        user_to_add.save()

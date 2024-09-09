@@ -4,43 +4,26 @@ Tests for home API.
 
 from django.test import TestCase
 from django.urls import reverse
-from django.contrib.auth import get_user_model
 
 from rest_framework import status
 from rest_framework.test import APIClient
 
 from core.models import Home
 from home.serializers import HomeSerializer
+from home.helper_method import (
+    create_user,
+    create_home,
+)
 
 HOME_URL = reverse('home:home-list')
-
-
-def create_user(**params):
-    """Create and return a user."""
-    defaults = {
-        'name': 'Akshat',
-        'email': 'test@example.com',
-        'password': 'Akshat112',
-    }
-    defaults.update(params)
-    user = get_user_model().objects.create_user(**defaults)
-    return user
-
-
-def create_home(**params):
-    """Create and return a new home."""
-    defaults = {
-        'name': 'Oaklites',
-        'parameters': '12876'
-    }
-    defaults.update(params)
-    home = Home.objects.create(**defaults)
-    return home
 
 
 def detail_url(home_id):
     """Create the URL for detail home."""
     return reverse('home:home-detail', args=[home_id])
+
+
+ASSIGN_HOME_URL = reverse('home:adduser')
 
 
 class PublicHomeAPITests(TestCase):
@@ -60,13 +43,13 @@ class PrivateHomeApiTests(TestCase):
     """Tests for authenticated Home API requests."""
 
     def setUp(self):
-        self.user = create_user()
+        self.user = create_user(email='sarthak@example.com', password='test12')
         self.client = APIClient()
         self.client.force_authenticate(self.user)
 
     def test_retrieve_home(self):
         """Tests retrieving home for authenticated user."""
-        home = create_home()
+        home = create_home(name='Innovative')
         self.user.home = home
         self.user.save()
 
@@ -87,6 +70,57 @@ class PrivateHomeApiTests(TestCase):
         self.assertEqual(home.name, payload['name'])
         self.assertEqual(home.parameters, payload['parameters'])
         self.assertEqual(self.user.home, home)
+
+    def test_assign_home_to_user(self):
+        """Test assigning home for a user when request made by
+        the home owner, given that the user has no home assigned."""
+
+        new_user = create_user(email='akshat@example.com', password='test123')
+        home = create_home(name='Oakies 320')
+        self.user.home = home
+        self.user.save()
+        payload = {
+            'user': new_user.id,
+        }
+        res = self.client.post(ASSIGN_HOME_URL, payload)
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        new_user.refresh_from_db()
+        self.assertEqual(new_user.home, home)
+
+    def test_assign_home_to_user_with_home_unsuccessful(self):
+        """Test assigning a home to a user who already have home
+        is unsuccessful."""
+
+        # Creating new user's home
+        new_user = create_user(email='akshat@example.com', password='test123')
+        home_new_user = create_home(name='Oakies 216')
+        new_user.home = home_new_user
+        new_user.save()
+
+        # Creating auth user's home
+        home = create_home(name='Oakies 320')
+        self.user.home = home
+        self.user.save()
+
+        payload = {
+            'user': new_user.id,
+        }
+        res = self.client.post(ASSIGN_HOME_URL, payload)
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        new_user.refresh_from_db()
+        self.assertNotEqual(new_user.home, home)
+
+    def test_assign_home_when_auth_user_has_no_home_unsuccessful(self):
+        """Test assigning home to a user when the auth user does
+        not have a home is unsuccessful."""
+        new_user = create_user(email='akshat@example.com', password='test123')
+        payload = {
+            'user': new_user.id,
+        }
+        res = self.client.post(ASSIGN_HOME_URL, payload)
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        new_user.refresh_from_db()
+        self.assertEqual(new_user.home, None)
 
     def test_creating_multiple_homes(self):
         """Test creating multiple homes is unsuccessful."""

@@ -24,3 +24,8 @@ class InventorySerializer(serializers.ModelSerializer):
         model = Inventory
         fields = ['id', 'ingredient', 'ingredient_name', 'amount']
         read_only_fields = ['id', 'ingredient_name']
+
+
+class AddUserHomeSerializer(serializers.Serializer):
+    """Serializer object for adding user to home."""
+    user = serializers.IntegerField()

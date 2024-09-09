@@ -132,6 +132,26 @@ class PrivateInventoryAPiTests(TestCase):
         inventory.refresh_from_db()
         self.assertEqual(inventory.amount, payload['amount'])
 
+    def test_update_inventory_ingredient_which_already_exists(self):
+        """Test updating inventory item with ingredient that already
+        exists in the inventory for the home is unsuccessful."""
+
+        # Creating inventory items ketchup and banana
+        ing1 = create_ingredient(user=self.user, name='Ketchup')
+        inv1 = add_to_inventory(home=self.home, ingredient=ing1)
+
+        ing2 = create_ingredient(user=self.user, name='Banana')
+        add_to_inventory(home=self.home, ingredient=ing2)
+
+        # Payload for changing Ketchup ingredient to banana ing.
+        url = detail_url(inv1.id)
+        payload = {
+            'ingredient': ing2.id,
+        }
+
+        res = self.client.patch(url, payload)
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
     def test_updating_home_in_inventory_for_user_unsuccessful(self):
         """Test update home in inventory for a user is unsuccessful."""
         new_home = create_home(name='New Home')

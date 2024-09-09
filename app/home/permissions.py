@@ -27,8 +27,9 @@ class IsHomeOwner(permissions.BasePermission):
                 raise ValidationError(
                     'Provided Ingredient does not exist in the system.')
 
-        # For POST requests, check for duplicate inventory entries
-        if request.method == 'POST' and ingredient_in_payload:
+        # For POST and UPDATE requests, check for duplicate inventory entries
+        if (request.method in ['POST', 'PUT', 'PATCH'] and
+                ingredient_in_payload):
             if Inventory.objects.filter(
                         home=user.home, ingredient=ingredient).exists():
                 raise ValidationError(
@@ -40,7 +41,6 @@ class IsHomeOwner(permissions.BasePermission):
         """Ensure user is updating the inventory of their home."""
         if obj.home.id != request.user.home.id:
             raise PermissionDenied('You are not authorized for this action.')
-
         return True
 
 

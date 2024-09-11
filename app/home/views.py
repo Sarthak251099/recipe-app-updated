@@ -11,7 +11,7 @@ from home import serializers
 from core.models import Home, Inventory
 from rest_framework.exceptions import ValidationError
 from rest_framework.exceptions import PermissionDenied
-from home.permissions import IsHomeOwner, AddUserToHomePermissions
+from home.permissions import InventoryPermissions, AddUserToHomePermissions
 from django.contrib.auth import get_user_model
 
 
@@ -75,7 +75,7 @@ class InventoryFetchView(generics.ListAPIView):
     serializer_class = serializers.InventorySerializer
     queryset = Inventory.objects.all()
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated, IsHomeOwner]
+    permission_classes = [IsAuthenticated, InventoryPermissions]
 
     def get_queryset(self):
         """Return the list of inventory for authenticated user."""
@@ -89,7 +89,7 @@ class InventoryCreateView(generics.CreateAPIView):
     serializer_class = serializers.InventorySerializer
     queryset = Inventory.objects.all()
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated, IsHomeOwner]
+    permission_classes = [IsAuthenticated, InventoryPermissions]
 
     def perform_create(self, serializer):
         """Create inventory for authenticated user's home"""
@@ -101,7 +101,7 @@ class InventoryDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = serializers.InventorySerializer
     queryset = Inventory.objects.all()
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated, IsHomeOwner]
+    permission_classes = [IsAuthenticated, InventoryPermissions]
 
 
 class AddUserToHomeView(generics.CreateAPIView):
@@ -116,3 +116,27 @@ class AddUserToHomeView(generics.CreateAPIView):
         auth_user = self.request.user
         user_to_add.home = auth_user.home
         user_to_add.save()
+
+
+class RemoveUserFromHomeView(generics.GenericAPIView):
+    """View to remove user from home and delete home if last user."""
+    serializer_class = serializers.RemoveUserFromHomeSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        home = user.home
+        if not home:
+            return Response(
+                {'detail': 'User is not associated with any home.'},
+                status=status.HTTP_400_BAD_REQUEST)
+        user.home = None
+        user.save()
+
+        # Check if the home is now empty (i.e., no users belong to it)
+        if not get_user_model().objects.filter(home=home).exists():
+            home.delete()
+        return Response(
+            {'detail': 'User removed from home.'},
+            status=status.HTTP_200_OK)

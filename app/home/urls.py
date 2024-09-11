@@ -24,4 +24,6 @@ urlpatterns = [
          name='inventory-detail'),
     path('adduser/', views.AddUserToHomeView.as_view(),
          name='adduser'),
+    path('remove-home/', views.RemoveUserFromHomeView.as_view(),
+         name='remove-home'),
 ]

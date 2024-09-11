@@ -24,6 +24,7 @@ def detail_url(home_id):
 
 
 ASSIGN_HOME_URL = reverse('home:adduser')
+REMOVE_HOME_URL = reverse('home:remove-home')
 
 
 class PublicHomeAPITests(TestCase):
@@ -121,6 +122,44 @@ class PrivateHomeApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
         new_user.refresh_from_db()
         self.assertEqual(new_user.home, None)
+
+    def test_user_remove_from_home(self):
+        """Test user removing themselves from home."""
+
+        home = create_home(name='Test Home')
+        self.user.home = home
+        self.user.save()
+
+        other_user = create_user(email='akshat@example.com')
+        other_user.home = home
+        other_user.save()
+
+        # Test removing the first user, home should not be deleted
+        res = self.client.post(REMOVE_HOME_URL)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.user.refresh_from_db()
+        home.refresh_from_db()
+
+        self.assertIsNone(self.user.home)
+        self.assertEqual(home.name, 'Test Home')
+
+    def test_user_remove_from_home_when_user_has_no_home(self):
+        """Test user trying to remove themselves from home when
+        they do not have a home assigned is unsuccessful."""
+        res = self.client.post(REMOVE_HOME_URL)
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_user_remove_from_home_when_user_is_last_user(self):
+        """Test removing the last user deletes the home."""
+        home = create_home(name='Test Home')
+        self.user.home = home
+        self.user.save()
+        res = self.client.post(REMOVE_HOME_URL)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.user.refresh_from_db()
+        self.assertIsNone(self.user.home)
+        with self.assertRaises(Home.DoesNotExist):
+            home.refresh_from_db()
 
     def test_creating_multiple_homes(self):
         """Test creating multiple homes is unsuccessful."""

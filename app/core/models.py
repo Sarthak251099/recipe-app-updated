@@ -8,6 +8,8 @@ from django.contrib.auth.models import (
     PermissionsMixin,
 )
 from django.conf import settings
+from django.core.validators import MinValueValidator, MaxValueValidator
+from django.utils import timezone
 
 
 class UserManager(BaseUserManager):
@@ -117,3 +119,22 @@ class Inventory(models.Model):
             f'Home: {self.home}, '
             f'Amount: {self.amount}'
         )
+
+
+class FavHomeRecipe(models.Model):
+    """Home recipe favourites."""
+    home = models.ForeignKey(
+        Home,
+        on_delete=models.CASCADE,
+        related_name='favourites',
+    )
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+    )
+    last_cooked = models.DateField(default=timezone.now)
+    rating = models.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(9)],
+        null=True,
+        blank=True,
+    )

@@ -29,3 +29,8 @@ class InventorySerializer(serializers.ModelSerializer):
 class AddUserHomeSerializer(serializers.Serializer):
     """Serializer object for adding user to home."""
     user = serializers.IntegerField()
+
+
+class RemoveUserFromHomeSerializer(serializers.Serializer):
+    """Serializer for removing user from home."""
+    pass

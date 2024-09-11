@@ -7,7 +7,7 @@ from core.models import Ingredient, Inventory
 from django.contrib.auth import get_user_model
 
 
-class IsHomeOwner(permissions.BasePermission):
+class InventoryPermissions(permissions.BasePermission):
     """Custom permission for Inventory to ensure user owns home."""
 
     def has_permission(self, request, view):

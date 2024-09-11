@@ -4,6 +4,7 @@ Test database models.
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from core import models
+from datetime import datetime
 
 
 def create_user(email='user@example.com', password='testpass123'):
@@ -136,3 +137,29 @@ class ModelTests(TestCase):
             amount=500,
         )
         self.assertEqual(inventory.home, home)
+
+    def test_add_home_recipe(self):
+        """Test adding home recipe relationship item."""
+        user = get_user_model().objects.create_user(
+            name='Sarthak',
+            email='test@example.com',
+            password='testpass123',
+        )
+        recipe = models.Recipe.objects.create(
+            user=user,
+            title='Sample recipe name',
+            time_minutes=5,
+            description='Sample recipe description.',
+        )
+        home = models.Home.objects.create(
+            name='Padma Nilaya',
+            parameters='27456'
+        )
+        date = datetime.strptime('02-09-2023', '%d-%m-%Y').date()
+        home_recipe = models.FavHomeRecipe.objects.create(
+            recipe=recipe,
+            home=home,
+            last_cooked=date,
+            rating=9,
+        )
+        self.assertEqual(home_recipe.recipe, recipe)

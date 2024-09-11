@@ -50,3 +50,15 @@ class IngredientPermissions(permissions.BasePermission):
                 'You are not authorized to perform this action.'
             )
         return True
+
+
+class RecipePermission(permissions.BasePermission):
+    """Custom permission to check recipe API requests."""
+
+    def has_object_permission(self, request, view, obj):
+        """Do not allow users to update/delete recipe created by others."""
+        if obj.user != request.user:
+            raise PermissionDenied(
+                'You are not authorized to perform this action.'
+            )
+        return True

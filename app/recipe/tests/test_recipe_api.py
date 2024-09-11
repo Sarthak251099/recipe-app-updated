@@ -57,21 +57,6 @@ class PrivateRecipeApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data, serializer.data)
 
-    def test_retrieve_recipes_limited_to_user(self):
-        """Test retrieve list of recipe limited to authenticated user."""
-        new_user = create_user(email='test2@example.com', password='Test12345')
-        create_recipe(user=new_user)
-        create_recipe(user=self.user)
-        create_recipe(user=self.user)
-
-        res = self.client.get(RECIPES_URL)
-
-        recipes = Recipe.objects.filter(user=self.user).order_by('-id')
-        serializer = RecipeSerializer(recipes, many=True)
-
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(res.data, serializer.data)
-
     def test_get_recipe_detail(self):
         """Test get recipe details."""
         recipe = create_recipe(user=self.user)
@@ -134,6 +119,20 @@ class PrivateRecipeApiTests(TestCase):
             self.assertEqual(getattr(recipe, k), v)
         self.assertEqual(recipe.user, self.user)
 
+    def test_update_recipe_created_by_other_user_return_error(self):
+        """Test update recipe created by other user is unsuccessful."""
+        new_user = create_user(email='test2@example.com', password='Test12345')
+        recipe = create_recipe(
+            user=new_user,
+            title='Sample Recipe Title',
+            link='https://example.com/recipe.pdf',
+            description='Sample recipe description',
+        )
+        payload = {'title': 'New recipe title'}
+        url = detail_url(recipe.id)
+        res = self.client.patch(url, payload)
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+
     def test_update_user_return_error(self):
         """Test changing the recipe user results in an error."""
         new_user = create_user(
@@ -167,5 +166,5 @@ class PrivateRecipeApiTests(TestCase):
         recipe = create_recipe(user=new_user)
         url = detail_url(recipe.id)
         res = self.client.delete(url)
-        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
         self.assertTrue(Recipe.objects.filter(id=recipe.id).exists())

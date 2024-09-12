@@ -27,10 +27,12 @@ class IngredientSerializer(serializers.ModelSerializer):
 class RecipeSerializer(serializers.ModelSerializer):
     """Serializer for recipe."""
 
+    created_by = serializers.ReadOnlyField(source='user.name')
+
     class Meta:
         model = Recipe
-        fields = ['id', 'title', 'time_minutes', 'link']
-        read_only_fields = ['id']
+        fields = ['id', 'title', 'time_minutes', 'link', 'created_by']
+        read_only_fields = ['id', 'created_by']
 
 
 class RecipeDetailSerializer(RecipeSerializer):

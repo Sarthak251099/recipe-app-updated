@@ -169,6 +169,7 @@ class FavHomeRecipeCreateView(generics.CreateAPIView):
     def perform_create(self, serializer):
         serializer.save(home=self.request.user.home)
 
+
 class FavHomeRecipeUpdateView(generics.RetrieveUpdateDestroyAPIView):
     """View to update, retrieve, delete fav recipe object."""
     serializer_class = serializers.FavHomeRecipeSerializer

@@ -91,3 +91,9 @@ class FavHomeRecipePermissions(permissions.BasePermission):
                         home=user.home, recipe=recipe).exists():
                     raise ValidationError('Recipe already in Favourites.')
         return True
+
+    def has_object_permission(self, request, view, obj):
+        """Ensure user is updating the inventory of their home."""
+        if obj.home.id != request.user.home.id:
+            raise PermissionDenied('You are not authorized for this action.')
+        return True

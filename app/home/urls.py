@@ -29,4 +29,6 @@ urlpatterns = [
           name='fav-recipes'),
      path('fav-recipe-create/', views.FavHomeRecipeCreateView.as_view(),
           name='fav-recipe-create'),
+     path('fav-recipe-update/<int:pk>/', views.FavHomeRecipeUpdateView.as_view(),
+          name='fav-recipe-update'),
 ]

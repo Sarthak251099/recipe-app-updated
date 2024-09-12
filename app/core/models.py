@@ -9,7 +9,6 @@ from django.contrib.auth.models import (
 )
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
-from django.utils import timezone
 
 
 class UserManager(BaseUserManager):
@@ -132,9 +131,12 @@ class FavHomeRecipe(models.Model):
         Recipe,
         on_delete=models.CASCADE,
     )
-    last_cooked = models.DateField(default=timezone.now)
+    last_cooked = models.DateField(null=True, blank=True)
     rating = models.IntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(9)],
+        validators=[MinValueValidator(1), MaxValueValidator(10)],
         null=True,
         blank=True,
     )
+
+    class Meta:
+        unique_together = ('home', 'recipe')

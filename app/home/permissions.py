@@ -3,7 +3,7 @@ Permissions for Home and Inventory API requests.
 """
 from rest_framework import permissions
 from rest_framework.exceptions import ValidationError, PermissionDenied
-from core.models import Ingredient, Inventory
+from core.models import Ingredient, Inventory, Recipe, FavHomeRecipe
 from django.contrib.auth import get_user_model
 
 
@@ -65,4 +65,29 @@ class AddUserToHomePermissions(permissions.BasePermission):
                 'You do not have a home to assign this user to.'
             )
 
+        return True
+
+
+class FavHomeRecipePermissions(permissions.BasePermission):
+    """Custom permission to check if recipe being added/updated exists.
+    Check if update/delete is done for objects that belong to user's home."""
+
+    def has_permission(self, request, view):
+        user = request.user
+        if not user.home:
+            raise ValidationError('You do not have a home.')
+
+        recipe_in_payload = request.data.get('recipe')
+
+        # Check if recipe exists in DB. Also check if duplicate recipe.
+        if recipe_in_payload:
+            try:
+                recipe_id = int(recipe_in_payload)
+                recipe = Recipe.objects.get(id=recipe_id)
+            except (ValueError, Recipe.DoesNotExist()):
+                raise ValidationError('Given recipe does not exist.')
+            else:
+                if FavHomeRecipe.objects.filter(
+                        home=user.home, recipe=recipe).exists():
+                    raise ValidationError('Recipe already in Favourites.')
         return True

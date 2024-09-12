@@ -8,10 +8,14 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from home import serializers
-from core.models import Home, Inventory
+from core.models import Home, Inventory, FavHomeRecipe
 from rest_framework.exceptions import ValidationError
 from rest_framework.exceptions import PermissionDenied
-from home.permissions import InventoryPermissions, AddUserToHomePermissions
+from home.permissions import (
+    InventoryPermissions,
+    AddUserToHomePermissions,
+    # FavHomeRecipePermissions,
+)
 from django.contrib.auth import get_user_model
 
 
@@ -140,3 +144,27 @@ class RemoveUserFromHomeView(generics.GenericAPIView):
         return Response(
             {'detail': 'User removed from home.'},
             status=status.HTTP_200_OK)
+
+
+class FavHomeRecipeListView(generics.ListAPIView):
+    """View to manage Favourite home recipe API requests."""
+    serializer_class = serializers.FavHomeRecipeSerializer
+    queryset = FavHomeRecipe.objects.all()
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        """Return the list of fav recipes for authenticated user's home."""
+        return (self.queryset
+                .filter(home=self.request.user.home)
+                .order_by('-id'))
+
+
+class FavHomeRecipeCreateView(generics.CreateAPIView):
+    """View to add a fav recipe to user's home."""
+    serializer_class = serializers.FavHomeRecipeSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(home=self.request.user.home, rating=8)

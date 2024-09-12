@@ -3,7 +3,7 @@ Serializers for home object.
 """
 
 from rest_framework import serializers
-from core.models import Home, Inventory
+from core.models import Home, Inventory, FavHomeRecipe
 
 
 class HomeSerializer(serializers.ModelSerializer):
@@ -34,3 +34,16 @@ class AddUserHomeSerializer(serializers.Serializer):
 class RemoveUserFromHomeSerializer(serializers.Serializer):
     """Serializer for removing user from home."""
     pass
+
+
+class FavHomeRecipeSerializer(serializers.ModelSerializer):
+    """Serializer for fav home recipes."""
+
+    home_name = serializers.ReadOnlyField(source='home.name')
+    recipe_title = serializers.ReadOnlyField(source='recipe.title')
+
+    class Meta:
+        model = FavHomeRecipe
+        fields = ['id', 'home_name', 'recipe',
+                  'recipe_title', 'last_cooked', 'rating']
+        read_only_fields = ['id', 'home_name', 'recipe_title']

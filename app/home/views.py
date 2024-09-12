@@ -14,7 +14,7 @@ from rest_framework.exceptions import PermissionDenied
 from home.permissions import (
     InventoryPermissions,
     AddUserToHomePermissions,
-    # FavHomeRecipePermissions,
+    FavHomeRecipePermissions,
 )
 from django.contrib.auth import get_user_model
 
@@ -164,7 +164,7 @@ class FavHomeRecipeCreateView(generics.CreateAPIView):
     """View to add a fav recipe to user's home."""
     serializer_class = serializers.FavHomeRecipeSerializer
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, FavHomeRecipePermissions]
 
     def perform_create(self, serializer):
-        serializer.save(home=self.request.user.home, rating=8)
+        serializer.save(home=self.request.user.home)

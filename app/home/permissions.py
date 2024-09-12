@@ -84,7 +84,7 @@ class FavHomeRecipePermissions(permissions.BasePermission):
             try:
                 recipe_id = int(recipe_in_payload)
                 recipe = Recipe.objects.get(id=recipe_id)
-            except (ValueError, Recipe.DoesNotExist()):
+            except (ValueError, Recipe.DoesNotExist):
                 raise ValidationError('Given recipe does not exist.')
             else:
                 if FavHomeRecipe.objects.filter(

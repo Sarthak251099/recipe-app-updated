@@ -163,3 +163,29 @@ class ModelTests(TestCase):
             rating=9,
         )
         self.assertEqual(home_recipe.recipe, recipe)
+
+    def test_create_recipe_ingredients(self):
+        """Test creating recipe ingredients in the system."""
+        user = get_user_model().objects.create_user(
+            name='Sarthak',
+            email='test@example.com',
+            password='testpass123',
+        )
+        ingredient = models.Ingredient.objects.create(
+            user=user,
+            name='Salt',
+        )
+        recipe = models.Recipe.objects.create(
+            user=user,
+            title='Sample recipe name',
+            time_minutes=5,
+            description='Sample recipe description.',
+        )
+        recipe_ingredient = models.RecipeIngredient.objects.create(
+            recipe=recipe,
+            ingredient=ingredient,
+            amount=300,
+            mandatory=True,
+            amount_unit='g',
+        )
+        self.assertEqual(recipe_ingredient.recipe, recipe)

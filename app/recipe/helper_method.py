@@ -2,7 +2,12 @@
 Helper methods for Recipe API test cases.
 """
 from django.contrib.auth import get_user_model
-from core.models import Tag, Recipe, Ingredient
+from core.models import (
+    Tag,
+    Recipe,
+    Ingredient,
+    RecipeIngredient,
+)
 
 
 def create_user(**params):
@@ -47,3 +52,18 @@ def create_ingredient(user, **params):
     ingredient = Ingredient.objects.create(user=user, **defaults)
 
     return ingredient
+
+
+def create_recipe_ingredient(recipe, ingredient, **params):
+    defaults = {
+        'amount': 300,
+        'mandatory': True,
+        'amount_unit': 'g',
+    }
+    defaults.update(params)
+    recipe_ing = RecipeIngredient.objects.create(
+        recipe=recipe,
+        ingredient=ingredient,
+        **defaults,
+    )
+    return recipe_ing

@@ -3,14 +3,19 @@ Views for Recipe.
 """
 from recipe import serializers
 from rest_framework import viewsets
-from core.models import Recipe, Tag, Ingredient
-
+from core.models import (
+    Recipe,
+    Tag,
+    Ingredient,
+    RecipeIngredient,
+)
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from recipe.permissions import (
     TagPermissions,
     IngredientPermissions,
     RecipePermission,
+    RecipeIngredientPermission,
 )
 
 
@@ -68,3 +73,15 @@ class IngredientViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         """Create a new ingredient."""
         serializer.save(user=self.request.user)
+
+
+class RecipeIngredientViewSet(viewsets.ModelViewSet):
+    """Views to manage recipe ingredient API requests."""
+    serializer_class = serializers.RecipeIngredientSerializer
+    queryset = RecipeIngredient.objects.all()
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated, RecipeIngredientPermission]
+
+    def get_queryset(self):
+        """Retrieve ingredients required for recipe."""
+        return self.queryset.all().order_by('-id')

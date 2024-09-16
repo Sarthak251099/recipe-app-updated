@@ -3,7 +3,7 @@ Permissions for recipe API requests.
 """
 from rest_framework import permissions
 from rest_framework.exceptions import ValidationError, PermissionDenied
-from core.models import Tag, Ingredient
+from core.models import Tag, Ingredient, Recipe
 
 
 class TagPermissions(permissions.BasePermission):
@@ -61,4 +61,31 @@ class RecipePermission(permissions.BasePermission):
             raise PermissionDenied(
                 'You are not authorized to perform this action.'
             )
+        return True
+
+
+class RecipeIngredientPermission(permissions.BasePermission):
+    """Custom permissions for recipe ingredient API Requests."""
+
+    def has_permission(self, request, view):
+        """Check if recipe owner is the user. Also check if recipe
+        and ingredient exists in the system."""
+        recipe_in_payload = request.data.get('recipe')
+        if recipe_in_payload:
+            try:
+                recipe_id = int(recipe_in_payload)
+                recipe = Recipe.objects.get(id=recipe_id)
+            except (ValueError, Recipe.DoesNotExist):
+                raise ValidationError('Given recipe does not exists')
+
+            if recipe.user.id != request.user.id:
+                raise PermissionDenied(
+                    'You are not authorized to perform this action')
+        return True
+
+    def has_object_permission(self, request, view, obj):
+        """Check if the instance to be updated belongs to user."""
+        if obj.recipe.user != request.user:
+            raise PermissionDenied(
+                'Permission Denied.')
         return True

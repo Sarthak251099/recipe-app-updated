@@ -111,6 +111,7 @@ class Inventory(models.Model):
         on_delete=models.CASCADE,
     )
     amount = models.IntegerField()
+    amount_unit = models.CharField(max_length=100, default='g')
 
     def __str__(self):
         return (
@@ -140,3 +141,21 @@ class FavHomeRecipe(models.Model):
 
     class Meta:
         unique_together = ('home', 'recipe')
+
+
+class RecipeIngredient(models.Model):
+    """Recipe ingredient model."""
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+    )
+    ingredient = models.ForeignKey(
+        Ingredient,
+        on_delete=models.CASCADE,
+    )
+    amount = models.IntegerField()
+    mandatory = models.BooleanField(default=False)
+    amount_unit = models.CharField(max_length=100)
+
+    class Meta:
+        unique_together = ('ingredient', 'recipe')

@@ -13,4 +13,4 @@ app/*/*/*/__pycache__/
 .env/
 .venv/
 venv/
-app/OldFiles/
+OldFiles/
